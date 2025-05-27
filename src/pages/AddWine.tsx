@@ -24,7 +24,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Star, Wine, Upload } from "lucide-react";
+import { ArrowLeft, Star, Wine, Upload, BookOpen, Utensils } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 type WineFormData = {
@@ -40,11 +40,15 @@ type WineFormData = {
   notes: string;
   foodPairings: string;
   isFavorite: boolean;
+  tastingExperience?: string;
 };
+
+type WineMode = "tasted" | "library" | null;
 
 const AddWine = () => {
   const navigate = useNavigate();
   const { register, handleSubmit, setValue, watch } = useForm<WineFormData>();
+  const [mode, setMode] = useState<WineMode>(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [sweetness, setSweetness] = useState([50]);
@@ -67,20 +71,88 @@ const AddWine = () => {
   };
 
   const onSubmit = (data: WineFormData) => {
-    // In a real app, we would save the data to a database
-    console.log({
+    const wineData = {
       ...data,
-      rating,
-      sweetness: sweetness[0],
-      body: body[0],
-      tannin: tannin[0],
-      acidity: acidity[0],
+      mode,
+      rating: mode === "tasted" ? rating : undefined,
+      sweetness: mode === "tasted" ? sweetness[0] : undefined,
+      body: mode === "tasted" ? body[0] : undefined,
+      tannin: mode === "tasted" ? tannin[0] : undefined,
+      acidity: mode === "tasted" ? acidity[0] : undefined,
       image: imagePreview
-    });
+    };
     
-    toast.success("Wine added successfully!");
+    console.log(wineData);
+    
+    toast.success(mode === "tasted" ? "Vin dégusté ajouté avec succès!" : "Vin ajouté à votre bibliothèque!");
     navigate("/");
   };
+
+  const resetForm = () => {
+    setMode(null);
+    setRating(0);
+    setHoverRating(0);
+    setSweetness([50]);
+    setBody([50]);
+    setTannin([50]);
+    setAcidity([50]);
+    setImagePreview(null);
+  };
+
+  if (mode === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-rose-50 to-slate-100 py-8 px-4">
+        <div className="max-w-2xl mx-auto">
+          <Button 
+            variant="ghost" 
+            className="mb-6" 
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Retour
+          </Button>
+          
+          <Card>
+            <CardHeader className="bg-red-600 text-white rounded-t-lg text-center">
+              <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                <Wine size={24} /> Ajouter un Vin
+              </CardTitle>
+              <CardDescription className="text-red-100">
+                Choisissez le type d'ajout
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="pt-8 pb-8">
+              <div className="space-y-4">
+                <Button
+                  onClick={() => setMode("tasted")}
+                  className="w-full py-8 text-lg flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700"
+                  size="lg"
+                >
+                  <Utensils size={24} />
+                  <div className="text-left">
+                    <div className="font-semibold">Déjà dégusté</div>
+                    <div className="text-sm opacity-90">Ajouter une expérience de dégustation complète</div>
+                  </div>
+                </Button>
+
+                <Button
+                  onClick={() => setMode("library")}
+                  className="w-full py-8 text-lg flex items-center justify-center gap-3 bg-red-700 hover:bg-red-800"
+                  size="lg"
+                >
+                  <BookOpen size={24} />
+                  <div className="text-left">
+                    <div className="font-semibold">À ajouter dans ma bibliothèque</div>
+                    <div className="text-sm opacity-90">Ajouter un vin à déguster plus tard</div>
+                  </div>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-slate-100 py-8 px-4">
@@ -88,18 +160,22 @@ const AddWine = () => {
         <Button 
           variant="ghost" 
           className="mb-6" 
-          onClick={() => navigate("/")}
+          onClick={resetForm}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          <ArrowLeft className="mr-2 h-4 w-4" /> Retour
         </Button>
         
         <Card>
           <CardHeader className="bg-red-600 text-white rounded-t-lg">
             <CardTitle className="text-2xl flex items-center gap-2">
-              <Wine size={24} /> Add New Wine
+              <Wine size={24} /> 
+              {mode === "tasted" ? "Vin Dégusté" : "Ajouter à ma Bibliothèque"}
             </CardTitle>
             <CardDescription className="text-red-100">
-              Record your wine tasting experience
+              {mode === "tasted" 
+                ? "Enregistrez votre expérience de dégustation" 
+                : "Ajoutez un vin à votre collection"
+              }
             </CardDescription>
           </CardHeader>
           
@@ -107,13 +183,13 @@ const AddWine = () => {
             <form id="wine-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Wine Image */}
               <div className="space-y-2">
-                <Label htmlFor="wine-image">Wine Image</Label>
+                <Label htmlFor="wine-image">Photo du Vin</Label>
                 <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
                   {imagePreview ? (
                     <div className="relative">
                       <img 
                         src={imagePreview} 
-                        alt="Wine preview" 
+                        alt="Aperçu du vin" 
                         className="h-48 object-contain mb-2"
                       />
                       <Button 
@@ -123,7 +199,7 @@ const AddWine = () => {
                         className="absolute top-0 right-0" 
                         onClick={() => setImagePreview(null)}
                       >
-                        Remove
+                        Supprimer
                       </Button>
                     </div>
                   ) : (
@@ -131,8 +207,8 @@ const AddWine = () => {
                       <Upload className="mx-auto h-12 w-12 text-gray-400" />
                       <div className="mt-2 text-sm text-gray-500">
                         <label htmlFor="file-upload" className="cursor-pointer text-red-600 hover:text-red-500">
-                          Upload a file
-                        </label> or drag and drop
+                          Télécharger une photo
+                        </label> ou glisser-déposer
                       </div>
                     </div>
                   )}
@@ -149,22 +225,22 @@ const AddWine = () => {
               {/* Basic Wine Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Wine Name *</Label>
-                  <Input id="name" {...register("name", { required: true })} placeholder="e.g. Château Margaux" />
+                  <Label htmlFor="name">Nom du Vin *</Label>
+                  <Input id="name" {...register("name", { required: true })} placeholder="ex. Château Margaux" />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="type">Wine Type *</Label>
+                  <Label htmlFor="type">Type de Vin *</Label>
                   <Select onValueChange={(value) => setValue("type", value)}>
                     <SelectTrigger id="type">
-                      <SelectValue placeholder="Select wine type" />
+                      <SelectValue placeholder="Sélectionner le type" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="red">Red</SelectItem>
-                        <SelectItem value="white">White</SelectItem>
+                        <SelectItem value="red">Rouge</SelectItem>
+                        <SelectItem value="white">Blanc</SelectItem>
                         <SelectItem value="rose">Rosé</SelectItem>
-                        <SelectItem value="sparkling">Sparkling</SelectItem>
+                        <SelectItem value="sparkling">Pétillant</SelectItem>
                         <SelectItem value="dessert">Dessert</SelectItem>
                       </SelectGroup>
                     </SelectContent>
@@ -172,148 +248,163 @@ const AddWine = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="vintage">Vintage</Label>
-                  <Input id="vintage" {...register("vintage")} placeholder="e.g. 2018" />
+                  <Label htmlFor="vintage">Millésime</Label>
+                  <Input id="vintage" {...register("vintage")} placeholder="ex. 2018" />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="region">Region</Label>
-                  <Input id="region" {...register("region")} placeholder="e.g. Bordeaux, France" />
+                  <Label htmlFor="region">Région</Label>
+                  <Input id="region" {...register("region")} placeholder="ex. Bordeaux, France" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="winery">Winery/Producer</Label>
-                  <Input id="winery" {...register("winery")} placeholder="e.g. Château Margaux" />
+                  <Label htmlFor="winery">Domaine/Producteur</Label>
+                  <Input id="winery" {...register("winery")} placeholder="ex. Château Margaux" />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="grapes">Grape Varieties</Label>
-                  <Input id="grapes" {...register("grapes")} placeholder="e.g. Cabernet Sauvignon, Merlot" />
+                  <Label htmlFor="grapes">Cépages</Label>
+                  <Input id="grapes" {...register("grapes")} placeholder="ex. Cabernet Sauvignon, Merlot" />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price</Label>
-                  <Input id="price" {...register("price")} placeholder="e.g. $45" />
+                  <Label htmlFor="price">Prix</Label>
+                  <Input id="price" {...register("price")} placeholder="ex. 45€" />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="purchaseLocation">Purchase Location</Label>
-                  <Input id="purchaseLocation" {...register("purchaseLocation")} placeholder="e.g. Wine Shop" />
-                </div>
-                
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="tastingDate">Tasting Date</Label>
-                  <Input id="tastingDate" type="date" {...register("tastingDate")} />
+                  <Label htmlFor="purchaseLocation">Lieu d'achat</Label>
+                  <Input id="purchaseLocation" {...register("purchaseLocation")} placeholder="ex. Cave à vin" />
                 </div>
               </div>
 
-              {/* Rating */}
-              <div className="space-y-2">
-                <Label>Rating</Label>
-                <div className="flex items-center space-x-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={28}
-                      className={`cursor-pointer ${
-                        star <= (hoverRating || rating) ? "text-red-500 fill-red-500" : "text-gray-300"
-                      }`}
-                      onClick={() => setRating(star)}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onMouseLeave={() => setHoverRating(0)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Characteristics */}
-              <div className="space-y-4">
-                <Label>Wine Characteristics</Label>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Dry</span>
-                    <span>Sweetness</span>
-                    <span>Sweet</span>
-                  </div>
-                  <Slider 
-                    value={sweetness} 
-                    onValueChange={setSweetness}
-                    max={100}
-                    step={1}
-                    className="mb-6"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Light</span>
-                    <span>Body</span>
-                    <span>Full</span>
-                  </div>
-                  <Slider 
-                    value={body} 
-                    onValueChange={setBody}
-                    max={100}
-                    step={1}
-                    className="mb-6"
-                  />
-                </div>
-
-                {wineType === "red" && (
+              {mode === "tasted" && (
+                <>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Low</span>
-                      <span>Tannin</span>
-                      <span>High</span>
+                    <Label htmlFor="tastingDate">Date de dégustation</Label>
+                    <Input id="tastingDate" type="date" {...register("tastingDate")} />
+                  </div>
+
+                  {/* Rating */}
+                  <div className="space-y-2">
+                    <Label>Note</Label>
+                    <div className="flex items-center space-x-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={28}
+                          className={`cursor-pointer ${
+                            star <= (hoverRating || rating) ? "text-red-500 fill-red-500" : "text-gray-300"
+                          }`}
+                          onClick={() => setRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                        />
+                      ))}
                     </div>
-                    <Slider 
-                      value={tannin} 
-                      onValueChange={setTannin}
-                      max={100}
-                      step={1}
-                      className="mb-6"
+                  </div>
+
+                  {/* Characteristics */}
+                  <div className="space-y-4">
+                    <Label>Caractéristiques du Vin</Label>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Sec</span>
+                        <span>Douceur</span>
+                        <span>Sucré</span>
+                      </div>
+                      <Slider 
+                        value={sweetness} 
+                        onValueChange={setSweetness}
+                        max={100}
+                        step={1}
+                        className="mb-6"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Léger</span>
+                        <span>Corps</span>
+                        <span>Corsé</span>
+                      </div>
+                      <Slider 
+                        value={body} 
+                        onValueChange={setBody}
+                        max={100}
+                        step={1}
+                        className="mb-6"
+                      />
+                    </div>
+
+                    {wineType === "red" && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Faible</span>
+                          <span>Tanins</span>
+                          <span>Élevé</span>
+                        </div>
+                        <Slider 
+                          value={tannin} 
+                          onValueChange={setTannin}
+                          max={100}
+                          step={1}
+                          className="mb-6"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Souple</span>
+                        <span>Acidité</span>
+                        <span>Vive</span>
+                      </div>
+                      <Slider 
+                        value={acidity} 
+                        onValueChange={setAcidity}
+                        max={100}
+                        step={1}
+                        className="mb-6"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Notes & Food Pairings */}
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes de dégustation</Label>
+                    <Textarea 
+                      id="notes" 
+                      {...register("notes")} 
+                      placeholder="Décrivez l'arôme, le goût, la finale, etc."
+                      className="min-h-[100px]"
                     />
                   </div>
-                )}
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Soft</span>
-                    <span>Acidity</span>
-                    <span>Crisp</span>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="foodPairings">Accords mets-vins</Label>
+                    <Textarea 
+                      id="foodPairings" 
+                      {...register("foodPairings")} 
+                      placeholder="ex. Viande grillée, fromages affinés"
+                    />
                   </div>
-                  <Slider 
-                    value={acidity} 
-                    onValueChange={setAcidity}
-                    max={100}
-                    step={1}
-                    className="mb-6"
-                  />
-                </div>
-              </div>
 
-              {/* Notes & Food Pairings */}
-              <div className="space-y-2">
-                <Label htmlFor="notes">Tasting Notes</Label>
-                <Textarea 
-                  id="notes" 
-                  {...register("notes")} 
-                  placeholder="Describe the aroma, taste, finish, etc."
-                  className="min-h-[100px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="foodPairings">Food Pairings</Label>
-                <Textarea 
-                  id="foodPairings" 
-                  {...register("foodPairings")} 
-                  placeholder="e.g. Grilled steak, aged cheeses"
-                />
-              </div>
+                  {/* Tasting Experience */}
+                  <div className="space-y-2">
+                    <Label htmlFor="tastingExperience">Expérience de dégustation</Label>
+                    <Textarea 
+                      id="tastingExperience" 
+                      {...register("tastingExperience")} 
+                      placeholder="Décrivez le contexte, l'occasion, vos impressions générales..."
+                      className="min-h-[120px]"
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Favorite */}
               <div className="flex items-center space-x-2">
@@ -324,16 +415,16 @@ const AddWine = () => {
                   }}
                 />
                 <Label htmlFor="isFavorite" className="text-sm font-normal">
-                  Save to favorites
+                  Ajouter aux favoris
                 </Label>
               </div>
             </form>
           </CardContent>
           
           <CardFooter className="flex justify-end space-x-4 border-t p-6">
-            <Button variant="outline" onClick={() => navigate("/")}>Cancel</Button>
+            <Button variant="outline" onClick={resetForm}>Annuler</Button>
             <Button type="submit" form="wine-form" className="bg-red-600 hover:bg-red-700">
-              Save Wine
+              {mode === "tasted" ? "Enregistrer la dégustation" : "Ajouter à ma bibliothèque"}
             </Button>
           </CardFooter>
         </Card>
