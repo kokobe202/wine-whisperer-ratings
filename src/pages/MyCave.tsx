@@ -1,0 +1,210 @@
+
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { ArrowLeft, Search, Star, Wine, Filter } from "lucide-react";
+import WineCard from "../components/WineCard";
+import WineDetailModal from "../components/WineDetailModal";
+
+// Mock data pour les vins (normalement ça viendrait d'une base de données)
+const mockWines = [
+  {
+    id: 1,
+    name: "Château Margaux",
+    type: "red",
+    vintage: "2018",
+    region: "Bordeaux, France",
+    winery: "Château Margaux",
+    rating: 5,
+    price: "€450",
+    image: "/placeholder.svg",
+    isFavorite: true,
+    tastingDate: "2024-01-15",
+    notes: "Exceptional wine with complex flavors of dark fruit and oak."
+  },
+  {
+    id: 2,
+    name: "Chablis Premier Cru",
+    type: "white",
+    vintage: "2020",
+    region: "Burgundy, France",
+    winery: "Domaine Raveneau",
+    rating: 4,
+    price: "€85",
+    image: "/placeholder.svg",
+    isFavorite: false,
+    tastingDate: "2024-02-10",
+    notes: "Crisp and mineral with notes of citrus and stone fruit."
+  },
+  {
+    id: 3,
+    name: "Dom Pérignon",
+    type: "sparkling",
+    vintage: "2012",
+    region: "Champagne, France",
+    winery: "Moët & Chandon",
+    rating: 5,
+    price: "€200",
+    image: "/placeholder.svg",
+    isFavorite: true,
+    tastingDate: "2024-03-05",
+    notes: "Elegant bubbles with complex layers of flavor."
+  }
+];
+
+const MyCave = () => {
+  const navigate = useNavigate();
+  const [wines, setWines] = useState(mockWines);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("name");
+  const [filterType, setFilterType] = useState("all");
+  const [selectedWine, setSelectedWine] = useState(null);
+
+  // Filtrage et tri des vins
+  const filteredAndSortedWines = wines
+    .filter(wine => {
+      const matchesSearch = wine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           wine.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           wine.winery.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === "all" || wine.type === filterType;
+      return matchesSearch && matchesType;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "rating":
+          return b.rating - a.rating;
+        case "vintage":
+          return b.vintage.localeCompare(a.vintage);
+        case "price":
+          return parseFloat(a.price.replace(/[€$]/g, "")) - parseFloat(b.price.replace(/[€$]/g, ""));
+        case "date":
+          return new Date(b.tastingDate).getTime() - new Date(a.tastingDate).getTime();
+        default:
+          return 0;
+      }
+    });
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-slate-100 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" /> Retour
+          </Button>
+          
+          <h1 className="text-3xl font-bold text-red-900 flex items-center gap-2">
+            <Wine size={32} />
+            Ma Cave
+          </h1>
+          
+          <div className="text-sm text-red-700">
+            {filteredAndSortedWines.length} vin{filteredAndSortedWines.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+
+        {/* Barre de recherche et filtres */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Rechercher par nom, région, producteur..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Type de vin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les types</SelectItem>
+                  <SelectItem value="red">Rouge</SelectItem>
+                  <SelectItem value="white">Blanc</SelectItem>
+                  <SelectItem value="rose">Rosé</SelectItem>
+                  <SelectItem value="sparkling">Pétillant</SelectItem>
+                  <SelectItem value="dessert">Dessert</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Trier par" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Nom</SelectItem>
+                  <SelectItem value="rating">Note</SelectItem>
+                  <SelectItem value="vintage">Millésime</SelectItem>
+                  <SelectItem value="price">Prix</SelectItem>
+                  <SelectItem value="date">Date de dégustation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Grille des vins */}
+        {filteredAndSortedWines.length === 0 ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <Wine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500 mb-4">
+                {searchTerm || filterType !== "all" 
+                  ? "Aucun vin trouvé avec ces critères" 
+                  : "Votre cave est vide"}
+              </p>
+              <Button onClick={() => navigate("/add-wine")} className="bg-red-600 hover:bg-red-700">
+                Ajouter votre premier vin
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+            {filteredAndSortedWines.map((wine) => (
+              <WineCard
+                key={wine.id}
+                wine={wine}
+                onClick={() => setSelectedWine(wine)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Modal pour les détails du vin */}
+      {selectedWine && (
+        <WineDetailModal
+          wine={selectedWine}
+          isOpen={!!selectedWine}
+          onClose={() => setSelectedWine(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default MyCave;
