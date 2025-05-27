@@ -16,11 +16,17 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Search, Star, Wine, Filter } from "lucide-react";
+import { ArrowLeft, Search, Star, Wine, Filter, ChevronDown } from "lucide-react";
 import WineCard from "../components/WineCard";
 import WineDetailModal from "../components/WineDetailModal";
 import { useToast } from "@/hooks/use-toast";
@@ -102,6 +108,8 @@ const MyCave = () => {
   const [wineToRemove, setWineToRemove] = useState(null);
   const [removalReason, setRemovalReason] = useState("");
   const [showRemovalDialog, setShowRemovalDialog] = useState(false);
+  const [showActionDialog, setShowActionDialog] = useState(false);
+  const [actionWine, setActionWine] = useState(null);
 
   // Filtrage et tri des vins
   const filteredAndSortedWines = wines
@@ -129,9 +137,24 @@ const MyCave = () => {
       }
     });
 
+  const handleWineCardClick = (wine) => {
+    setActionWine(wine);
+    setShowActionDialog(true);
+  };
+
+  const handleAddTasting = () => {
+    setShowActionDialog(false);
+    // TODO: Navigate to tasting form for this wine
+    toast({
+      title: "Ajouter dégustation",
+      description: `Redirection vers le formulaire de dégustation pour ${actionWine?.name}`,
+    });
+  };
+
   const handleRemoveWine = (wine, reason) => {
     setWineToRemove(wine);
     setRemovalReason(reason);
+    setShowActionDialog(false);
     setShowRemovalDialog(true);
   };
 
@@ -223,7 +246,7 @@ const MyCave = () => {
           </CardContent>
         </Card>
 
-        {/* Grille des vins avec menu contextuel */}
+        {/* Grille des vins */}
         {filteredAndSortedWines.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
@@ -241,55 +264,11 @@ const MyCave = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             {filteredAndSortedWines.map((wine) => (
-              <ContextMenu key={wine.id}>
-                <ContextMenuTrigger>
-                  <WineCard
-                    wine={wine}
-                    onClick={() => setSelectedWine(wine)}
-                  />
-                </ContextMenuTrigger>
-                <ContextMenuContent className="w-64">
-                  <ContextMenuItem onClick={() => setSelectedWine(wine)}>
-                    Voir les détails
-                  </ContextMenuItem>
-                  <ContextMenuItem 
-                    onClick={() => handleRemoveWine(wine, "tasted")}
-                    className="text-orange-600"
-                  >
-                    Supprimer - Dégusté
-                  </ContextMenuItem>
-                  <ContextMenuItem 
-                    onClick={() => handleRemoveWine(wine, "sold")}
-                    className="text-green-600"
-                  >
-                    Supprimer - Vendu
-                  </ContextMenuItem>
-                  <ContextMenuItem 
-                    onClick={() => handleRemoveWine(wine, "gifted")}
-                    className="text-blue-600"
-                  >
-                    Supprimer - Offert
-                  </ContextMenuItem>
-                  <ContextMenuItem 
-                    onClick={() => handleRemoveWine(wine, "broken")}
-                    className="text-red-600"
-                  >
-                    Supprimer - Cassé
-                  </ContextMenuItem>
-                  <ContextMenuItem 
-                    onClick={() => handleRemoveWine(wine, "spoiled")}
-                    className="text-red-600"
-                  >
-                    Supprimer - Abîmé
-                  </ContextMenuItem>
-                  <ContextMenuItem 
-                    onClick={() => handleRemoveWine(wine, "other")}
-                    className="text-gray-600"
-                  >
-                    Supprimer - Autre raison
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
+              <WineCard
+                key={wine.id}
+                wine={wine}
+                onClick={() => handleWineCardClick(wine)}
+              />
             ))}
           </div>
         )}
@@ -303,6 +282,78 @@ const MyCave = () => {
           onClose={() => setSelectedWine(null)}
         />
       )}
+
+      {/* Dialog d'actions pour le vin */}
+      <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Actions pour {actionWine?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <Button
+              onClick={() => setSelectedWine(actionWine)}
+              variant="outline"
+              className="w-full"
+            >
+              Voir les détails
+            </Button>
+            
+            <Button
+              onClick={handleAddTasting}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              Ajouter une dégustation
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  Supprimer de la cave
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-full">
+                <DropdownMenuItem 
+                  onClick={() => handleRemoveWine(actionWine, "tasted")}
+                  className="text-orange-600"
+                >
+                  Dégusté
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleRemoveWine(actionWine, "sold")}
+                  className="text-green-600"
+                >
+                  Vendu
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleRemoveWine(actionWine, "gifted")}
+                  className="text-blue-600"
+                >
+                  Offert
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleRemoveWine(actionWine, "broken")}
+                  className="text-red-600"
+                >
+                  Cassé
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleRemoveWine(actionWine, "spoiled")}
+                  className="text-red-600"
+                >
+                  Abîmé
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleRemoveWine(actionWine, "other")}
+                  className="text-gray-600"
+                >
+                  Autre raison
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de confirmation pour la suppression */}
       <AlertDialog open={showRemovalDialog} onOpenChange={setShowRemovalDialog}>
