@@ -41,6 +41,8 @@ import { ArrowLeft, Search, Star, Wine, Filter, ChevronDown } from "lucide-react
 import WineCard from "../components/WineCard";
 import WineDetailModal from "../components/WineDetailModal";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useCommunity } from "@/contexts/CommunityContext";
 
 // Mock data pour les vins (normalement ça viendrait d'une base de données)
 const mockWines = [
@@ -88,18 +90,11 @@ const mockWines = [
   }
 ];
 
-const removalReasons = [
-  { value: "tasted", label: "Dégusté" },
-  { value: "sold", label: "Vendu" },
-  { value: "gifted", label: "Offert" },
-  { value: "broken", label: "Cassé" },
-  { value: "spoiled", label: "Abîmé" },
-  { value: "other", label: "Autre" }
-];
-
 const MyCave = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useLanguage();
+  const { addActivity } = useCommunity();
   const [wines, setWines] = useState(mockWines);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
@@ -110,6 +105,15 @@ const MyCave = () => {
   const [showRemovalDialog, setShowRemovalDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [actionWine, setActionWine] = useState(null);
+
+  const removalReasons = [
+    { value: "tasted", label: t('wine.tasted') },
+    { value: "sold", label: t('wine.sold') },
+    { value: "gifted", label: t('wine.gifted') },
+    { value: "broken", label: t('wine.broken') },
+    { value: "spoiled", label: t('wine.spoiled') },
+    { value: "other", label: t('wine.other') }
+  ];
 
   // Filtrage et tri des vins
   const filteredAndSortedWines = wines
@@ -144,10 +148,9 @@ const MyCave = () => {
 
   const handleAddTasting = () => {
     setShowActionDialog(false);
-    // TODO: Navigate to tasting form for this wine
     toast({
-      title: "Ajouter dégustation",
-      description: `Redirection vers le formulaire de dégustation pour ${actionWine?.name}`,
+      title: t('toast.addTastingTitle'),
+      description: `${t('toast.addTastingDesc')} ${actionWine?.name}`,
     });
   };
 
@@ -162,9 +165,18 @@ const MyCave = () => {
     if (wineToRemove) {
       setWines(wines.filter(wine => wine.id !== wineToRemove.id));
       const reasonLabel = removalReasons.find(r => r.value === removalReason)?.label || removalReason;
+      
+      // Add activity to community
+      addActivity({
+        username: "Utilisateur", // In a real app, this would be the current user's name
+        action: "removed",
+        wineName: wineToRemove.name,
+        reason: reasonLabel
+      });
+
       toast({
-        title: "Bouteille supprimée",
-        description: `${wineToRemove.name} a été supprimé de votre cave (${reasonLabel.toLowerCase()}).`,
+        title: t('wine.removed'),
+        description: `${wineToRemove.name} ${t('wine.removedDescription')} (${reasonLabel.toLowerCase()}).`,
       });
       setShowRemovalDialog(false);
       setWineToRemove(null);
@@ -188,16 +200,16 @@ const MyCave = () => {
             onClick={() => navigate("/")}
             className="flex items-center gap-2"
           >
-            <ArrowLeft className="h-4 w-4" /> Retour
+            <ArrowLeft className="h-4 w-4" /> {t('nav.back')}
           </Button>
           
           <h1 className="text-3xl font-bold text-red-900 flex items-center gap-2">
             <Wine size={32} />
-            Ma Cave
+            {t('cave.title')}
           </h1>
           
           <div className="text-sm text-red-700">
-            {filteredAndSortedWines.length} vin{filteredAndSortedWines.length !== 1 ? 's' : ''}
+            {filteredAndSortedWines.length} {filteredAndSortedWines.length !== 1 ? t('cave.wineCountPlural') : t('cave.wineCount')}
           </div>
         </div>
 
@@ -208,7 +220,7 @@ const MyCave = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Rechercher par nom, région, producteur..."
+                  placeholder={t('cave.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -221,25 +233,25 @@ const MyCave = () => {
                   <SelectValue placeholder="Type de vin" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  <SelectItem value="red">Rouge</SelectItem>
-                  <SelectItem value="white">Blanc</SelectItem>
-                  <SelectItem value="rose">Rosé</SelectItem>
-                  <SelectItem value="sparkling">Pétillant</SelectItem>
-                  <SelectItem value="dessert">Dessert</SelectItem>
+                  <SelectItem value="all">{t('cave.allTypes')}</SelectItem>
+                  <SelectItem value="red">{t('cave.red')}</SelectItem>
+                  <SelectItem value="white">{t('cave.white')}</SelectItem>
+                  <SelectItem value="rose">{t('cave.rose')}</SelectItem>
+                  <SelectItem value="sparkling">{t('cave.sparkling')}</SelectItem>
+                  <SelectItem value="dessert">{t('cave.dessert')}</SelectItem>
                 </SelectContent>
               </Select>
               
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Trier par" />
+                  <SelectValue placeholder={t('cave.sortBy')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name">Nom</SelectItem>
-                  <SelectItem value="rating">Note</SelectItem>
-                  <SelectItem value="vintage">Millésime</SelectItem>
-                  <SelectItem value="price">Prix</SelectItem>
-                  <SelectItem value="date">Date de dégustation</SelectItem>
+                  <SelectItem value="name">{t('cave.name')}</SelectItem>
+                  <SelectItem value="rating">{t('cave.rating')}</SelectItem>
+                  <SelectItem value="vintage">{t('cave.vintage')}</SelectItem>
+                  <SelectItem value="price">{t('cave.price')}</SelectItem>
+                  <SelectItem value="date">{t('cave.date')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -253,11 +265,11 @@ const MyCave = () => {
               <Wine className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-500 mb-4">
                 {searchTerm || filterType !== "all" 
-                  ? "Aucun vin trouvé avec ces critères" 
-                  : "Votre cave est vide"}
+                  ? t('cave.noWines')
+                  : t('cave.emptyTitle')}
               </p>
               <Button onClick={() => navigate("/add-wine")} className="bg-red-600 hover:bg-red-700">
-                Ajouter votre premier vin
+                {t('cave.addFirstWine')}
               </Button>
             </CardContent>
           </Card>
@@ -287,7 +299,7 @@ const MyCave = () => {
       <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Actions pour {actionWine?.name}</DialogTitle>
+            <DialogTitle>{t('wine.actions')} {actionWine?.name}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
             <Button
@@ -295,20 +307,20 @@ const MyCave = () => {
               variant="outline"
               className="w-full"
             >
-              Voir les détails
+              {t('wine.viewDetails')}
             </Button>
             
             <Button
               onClick={handleAddTasting}
               className="w-full bg-green-600 hover:bg-green-700"
             >
-              Ajouter une dégustation
+              {t('wine.addTasting')}
             </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full">
-                  Supprimer de la cave
+                  {t('wine.removeFromCave')}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -317,37 +329,37 @@ const MyCave = () => {
                   onClick={() => handleRemoveWine(actionWine, "tasted")}
                   className="text-orange-600"
                 >
-                  Dégusté
+                  {t('wine.tasted')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleRemoveWine(actionWine, "sold")}
                   className="text-green-600"
                 >
-                  Vendu
+                  {t('wine.sold')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleRemoveWine(actionWine, "gifted")}
                   className="text-blue-600"
                 >
-                  Offert
+                  {t('wine.gifted')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleRemoveWine(actionWine, "broken")}
                   className="text-red-600"
                 >
-                  Cassé
+                  {t('wine.broken')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleRemoveWine(actionWine, "spoiled")}
                   className="text-red-600"
                 >
-                  Abîmé
+                  {t('wine.spoiled')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleRemoveWine(actionWine, "other")}
                   className="text-gray-600"
                 >
-                  Autre raison
+                  {t('wine.other')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -359,24 +371,24 @@ const MyCave = () => {
       <AlertDialog open={showRemovalDialog} onOpenChange={setShowRemovalDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>{t('wine.confirmRemoval')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer "{wineToRemove?.name}" de votre cave ?
+              {t('wine.confirmRemovalText')} "{wineToRemove?.name}" de votre cave ?
               <br />
               <span className="font-medium">
-                Raison : {removalReasons.find(r => r.value === removalReason)?.label}
+                {t('wine.reason')} : {removalReasons.find(r => r.value === removalReason)?.label}
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelRemoval}>
-              Annuler
+              {t('wine.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmRemoval}
               className="bg-red-600 hover:bg-red-700"
             >
-              Supprimer
+              {t('wine.remove')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -3,10 +3,13 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Users, Settings, Wine, Star, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { toast } = useToast();
 
   const handleAddWineClick = () => {
     navigate("/add-wine");
@@ -17,19 +20,19 @@ const Index = () => {
   };
 
   const handleCommunityClick = () => {
-    toast("Wine community page coming soon");
+    navigate("/community");
   };
 
   const handleSettingsClick = () => {
-    toast("Settings page coming soon");
+    navigate("/settings");
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-rose-50 to-slate-100">
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold mb-4 text-red-900">Wine Journal</h1>
+        <h1 className="text-4xl font-bold mb-4 text-red-900">{t('home.title')}</h1>
         <p className="text-xl text-red-700 max-w-md mx-auto">
-          Track your wine experiences and share your favorites
+          {t('home.subtitle')}
         </p>
       </div>
 
@@ -40,7 +43,7 @@ const Index = () => {
           size="lg"
         >
           <Plus size={24} />
-          <span>Add Wine</span>
+          <span>{t('home.addWine')}</span>
         </Button>
 
         <Button
@@ -49,7 +52,7 @@ const Index = () => {
           size="lg"
         >
           <BookOpen size={24} />
-          <span>Ma Cave</span>
+          <span>{t('home.myCave')}</span>
         </Button>
 
         <Button
@@ -59,7 +62,7 @@ const Index = () => {
           size="lg"
         >
           <Users size={24} />
-          <span>Community</span>
+          <span>{t('home.community')}</span>
         </Button>
 
         <Button
@@ -69,14 +72,14 @@ const Index = () => {
           size="lg"
         >
           <Settings size={24} />
-          <span>Settings</span>
+          <span>{t('home.settings')}</span>
         </Button>
       </div>
 
       <div className="mt-12 px-4 py-6 bg-white rounded-lg shadow-md max-w-md w-full">
-        <h2 className="text-2xl font-semibold text-center mb-4 text-red-800">Recent Wines</h2>
+        <h2 className="text-2xl font-semibold text-center mb-4 text-red-800">{t('home.recentWines')}</h2>
         <div className="text-center text-gray-500 italic">
-          Your recently added wines will appear here
+          {t('home.recentWinesEmpty')}
         </div>
         <div className="flex justify-center mt-4">
           <div className="flex space-x-1">
