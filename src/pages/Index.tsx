@@ -1,15 +1,13 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, Settings, Wine, Star, BookOpen } from "lucide-react";
+import { Plus, Users, Settings, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { toast } = useToast();
 
   const handleAddWineClick = () => {
     navigate("/add-wine");
@@ -74,22 +72,6 @@ const Index = () => {
           <Settings size={24} />
           <span>{t('home.settings')}</span>
         </Button>
-      </div>
-
-      <div className="mt-12 px-4 py-6 bg-white rounded-lg shadow-md max-w-md w-full">
-        <h2 className="text-2xl font-semibold text-center mb-4 text-red-800">{t('home.recentWines')}</h2>
-        <div className="text-center text-gray-500 italic">
-          {t('home.recentWinesEmpty')}
-        </div>
-        <div className="flex justify-center mt-4">
-          <div className="flex space-x-1">
-            <Star className="text-red-500" size={20} />
-            <Star className="text-red-500" size={20} />
-            <Star className="text-red-500" size={20} />
-            <Star className="text-gray-300" size={20} />
-            <Star className="text-gray-300" size={20} />
-          </div>
-        </div>
       </div>
     </div>
   );

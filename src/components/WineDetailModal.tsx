@@ -8,7 +8,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Heart, MapPin, Calendar, DollarSign, Wine } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Star, Heart, MapPin, Calendar, DollarSign, Wine, ChevronDown, Plus } from "lucide-react";
 
 interface Wine {
   id: number;
@@ -29,6 +35,8 @@ interface WineDetailModalProps {
   wine: Wine;
   isOpen: boolean;
   onClose: () => void;
+  onAddTasting?: () => void;
+  onRemoveWine?: (wine: Wine, reason: string) => void;
 }
 
 const getWineTypeColor = (type: string) => {
@@ -65,7 +73,7 @@ const getWineTypeLabel = (type: string) => {
   }
 };
 
-const WineDetailModal = ({ wine, isOpen, onClose }: WineDetailModalProps) => {
+const WineDetailModal = ({ wine, isOpen, onClose, onAddTasting, onRemoveWine }: WineDetailModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -162,12 +170,66 @@ const WineDetailModal = ({ wine, isOpen, onClose }: WineDetailModalProps) => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Fermer
+        {/* Boutons d'action */}
+        <div className="flex flex-col gap-3 mt-6 pt-4 border-t">
+          <Button 
+            onClick={onAddTasting}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+            size="lg"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter une dégustation
           </Button>
-          <Button className="bg-red-600 hover:bg-red-700">
-            Modifier
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full py-3" size="lg">
+                Retirer de la cave
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-full">
+              <DropdownMenuItem 
+                onClick={() => onRemoveWine?.(wine, "tasted")}
+                className="text-orange-600"
+              >
+                🍷 Dégusté
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onRemoveWine?.(wine, "sold")}
+                className="text-green-600"
+              >
+                💰 Vendu
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onRemoveWine?.(wine, "gifted")}
+                className="text-blue-600"
+              >
+                🎁 Offert
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onRemoveWine?.(wine, "broken")}
+                className="text-red-600"
+              >
+                💥 Cassé
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onRemoveWine?.(wine, "spoiled")}
+                className="text-red-600"
+              >
+                🚫 Abîmé
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onRemoveWine?.(wine, "other")}
+                className="text-gray-600"
+              >
+                ❓ Autre
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button variant="outline" onClick={onClose} className="py-3" size="lg">
+            Fermer
           </Button>
         </div>
       </DialogContent>
