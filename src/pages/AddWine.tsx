@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -24,6 +23,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Wine, Upload, BookOpen, Utensils } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { useCommunity } from "@/contexts/CommunityContext";
 import CountryRegionSelector from "../components/CountryRegionSelector";
 import WineRating from "../components/WineRating";
 
@@ -43,6 +43,7 @@ type WineMode = "tasted" | "library" | null;
 
 const AddWine = () => {
   const navigate = useNavigate();
+  const { addActivity } = useCommunity();
   const { register, handleSubmit, setValue, watch } = useForm<WineFormData>();
   const [mode, setMode] = useState<WineMode>(null);
   const [rating, setRating] = useState(0);
@@ -78,6 +79,14 @@ const AddWine = () => {
     };
     
     console.log(wineData);
+    
+    // Add activity to community
+    addActivity({
+      username: "Utilisateur",
+      action: "added",
+      wineName: data.name,
+      reason: mode === "tasted" ? "Dégustation" : "Bibliothèque"
+    });
     
     toast.success(mode === "tasted" ? "Vin dégusté ajouté avec succès!" : "Vin ajouté à votre bibliothèque!");
     navigate("/my-cave");

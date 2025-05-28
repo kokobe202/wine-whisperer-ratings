@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Users, Settings, BookOpen } from "lucide-react";
@@ -55,8 +54,7 @@ const Index = () => {
 
         <Button
           onClick={handleCommunityClick}
-          className="py-8 text-lg flex items-center justify-center gap-3"
-          variant="secondary"
+          className="py-8 text-lg flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 text-white"
           size="lg"
         >
           <Users size={24} />
