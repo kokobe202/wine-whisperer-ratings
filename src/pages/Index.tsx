@@ -113,7 +113,7 @@ const Index = () => {
           </Button>
         </div>
       ) : (
-        // Non-authenticated user view
+        // Non-authenticated user view - simplified to only show login/signup
         <div className="flex flex-col gap-4 w-full max-w-md px-4">
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 mb-6 text-center">
             <User className="mx-auto h-12 w-12 text-red-600 mb-4" />
@@ -132,35 +132,6 @@ const Index = () => {
           >
             <LogIn size={24} />
             <span>Se connecter / S'inscrire</span>
-          </Button>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              onClick={handleAddWineClick}
-              className="py-6 text-base flex flex-col items-center justify-center gap-2 bg-red-700 hover:bg-red-800"
-              size="lg"
-            >
-              <Plus size={20} />
-              <span>{t('home.addWine')}</span>
-            </Button>
-
-            <Button
-              onClick={handleMyCaveClick}
-              className="py-6 text-base flex flex-col items-center justify-center gap-2 bg-red-700 hover:bg-red-800"
-              size="lg"
-            >
-              <BookOpen size={20} />
-              <span>{t('home.myCave')}</span>
-            </Button>
-          </div>
-
-          <Button
-            onClick={handleCommunityClick}
-            className="py-6 text-base flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 text-white"
-            size="lg"
-          >
-            <Users size={20} />
-            <span>{t('home.community')}</span>
           </Button>
         </div>
       )}
