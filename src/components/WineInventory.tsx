@@ -6,20 +6,21 @@ import WineGrid from "./wine-inventory/WineGrid";
 import WineRemovalDialog from "./wine-inventory/WineRemovalDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCommunity } from "@/contexts/CommunityContext";
 import { useWineFiltering } from "@/hooks/useWineFiltering";
-import { mockWines } from "@/data/mockWines";
+import { useUserWines } from "@/hooks/useWines";
+import { useTastings } from "@/hooks/useTastings";
+import { UserWine } from "@/types/database";
 
 const WineInventory = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { addActivity } = useCommunity();
-  const [wines, setWines] = useState(mockWines);
+  const { wines, loading, removeWineFromUser } = useUserWines();
+  const { addTasting } = useTastings();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [filterType, setFilterType] = useState("all");
-  const [selectedWine, setSelectedWine] = useState(null);
-  const [wineToRemove, setWineToRemove] = useState(null);
+  const [selectedWine, setSelectedWine] = useState<UserWine | null>(null);
+  const [wineToRemove, setWineToRemove] = useState<UserWine | null>(null);
   const [removalReason, setRemovalReason] = useState("");
   const [showRemovalDialog, setShowRemovalDialog] = useState(false);
 
@@ -32,45 +33,76 @@ const WineInventory = () => {
     { value: "other", label: t('wine.other') }
   ];
 
-  const filteredAndSortedWines = useWineFiltering(wines, searchTerm, filterType, sortBy);
+  // Transformer les données pour le hook de filtrage
+  const transformedWines = wines.map(userWine => ({
+    ...userWine.wine,
+    id: userWine.id,
+    isFavorite: userWine.is_favorite || false,
+    rating: 0, // TODO: calculer la moyenne des notes
+    tastingDate: userWine.created_at,
+    notes: userWine.notes || ''
+  }));
 
-  const handleWineCardClick = (wine) => {
-    setSelectedWine(wine);
+  const filteredAndSortedWines = useWineFiltering(transformedWines, searchTerm, filterType, sortBy);
+
+  const handleWineCardClick = (wine: any) => {
+    const userWine = wines.find(w => w.id === wine.id);
+    setSelectedWine(userWine || null);
   };
 
-  const handleAddTasting = () => {
-    toast({
-      title: t('toast.addTastingTitle'),
-      description: `${t('toast.addTastingDesc')} ${selectedWine?.name}`,
-    });
+  const handleAddTasting = async () => {
+    if (!selectedWine?.wine) return;
+
+    try {
+      await addTasting({
+        wine_id: selectedWine.wine.id,
+        rating: 5,
+        tasting_date: new Date().toISOString().split('T')[0],
+        tasting_notes: `Dégustation de ${selectedWine.wine.name}`
+      });
+
+      toast({
+        title: t('toast.addTastingTitle'),
+        description: `${t('toast.addTastingDesc')} ${selectedWine.wine.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter la dégustation",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleRemoveWine = (wine, reason) => {
+  const handleRemoveWine = (wine: UserWine, reason: string) => {
     setWineToRemove(wine);
     setRemovalReason(reason);
     setSelectedWine(null);
     setShowRemovalDialog(true);
   };
 
-  const confirmRemoval = () => {
-    if (wineToRemove) {
-      setWines(wines.filter(wine => wine.id !== wineToRemove.id));
+  const confirmRemoval = async () => {
+    if (!wineToRemove) return;
+
+    try {
+      await removeWineFromUser(wineToRemove.id, removalReason);
+      
       const reasonLabel = removalReasons.find(r => r.value === removalReason)?.label || removalReason;
       
-      addActivity({
-        username: "Utilisateur",
-        action: "removed",
-        wineName: wineToRemove.name,
-        reason: reasonLabel
-      });
-
       toast({
         title: t('wine.removed'),
-        description: `${wineToRemove.name} ${t('wine.removedDescription')} (${reasonLabel.toLowerCase()}).`,
+        description: `${wineToRemove.wine?.name} ${t('wine.removedDescription')} (${reasonLabel.toLowerCase()}).`,
       });
+      
       setShowRemovalDialog(false);
       setWineToRemove(null);
       setRemovalReason("");
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de retirer le vin",
+        variant: "destructive"
+      });
     }
   };
 
@@ -79,6 +111,15 @@ const WineInventory = () => {
     setWineToRemove(null);
     setRemovalReason("");
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+        <span className="ml-2">Chargement de votre cave...</span>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -100,11 +141,18 @@ const WineInventory = () => {
 
       {selectedWine && (
         <WineDetailModal
-          wine={selectedWine}
+          wine={{
+            ...selectedWine.wine,
+            id: selectedWine.id,
+            isFavorite: selectedWine.is_favorite || false,
+            rating: 0, // TODO: calculer moyenne
+            tastingDate: selectedWine.created_at,
+            notes: selectedWine.notes || ''
+          }}
           isOpen={!!selectedWine}
           onClose={() => setSelectedWine(null)}
           onAddTasting={handleAddTasting}
-          onRemoveWine={handleRemoveWine}
+          onRemoveWine={(wine, reason) => handleRemoveWine(selectedWine, reason)}
         />
       )}
 

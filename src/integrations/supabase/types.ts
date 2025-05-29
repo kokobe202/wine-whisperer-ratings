@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      community_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          id: string
+          notes: string | null
+          rating: number | null
+          reason: string | null
+          user_id: string
+          wine_id: string | null
+          wine_name: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          rating?: number | null
+          reason?: string | null
+          user_id: string
+          wine_id?: string | null
+          wine_name: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          rating?: number | null
+          reason?: string | null
+          user_id?: string
+          wine_id?: string | null
+          wine_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_activities_wine_id_fkey"
+            columns: ["wine_id"]
+            isOneToOne: false
+            referencedRelation: "wines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -33,6 +77,154 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      tastings: {
+        Row: {
+          aroma_notes: string | null
+          color_notes: string | null
+          created_at: string
+          finish_notes: string | null
+          id: string
+          overall_impression: string | null
+          rating: number | null
+          taste_notes: string | null
+          tasting_date: string
+          tasting_notes: string | null
+          updated_at: string
+          user_id: string
+          wine_id: string
+        }
+        Insert: {
+          aroma_notes?: string | null
+          color_notes?: string | null
+          created_at?: string
+          finish_notes?: string | null
+          id?: string
+          overall_impression?: string | null
+          rating?: number | null
+          taste_notes?: string | null
+          tasting_date?: string
+          tasting_notes?: string | null
+          updated_at?: string
+          user_id: string
+          wine_id: string
+        }
+        Update: {
+          aroma_notes?: string | null
+          color_notes?: string | null
+          created_at?: string
+          finish_notes?: string | null
+          id?: string
+          overall_impression?: string | null
+          rating?: number | null
+          taste_notes?: string | null
+          tasting_date?: string
+          tasting_notes?: string | null
+          updated_at?: string
+          user_id?: string
+          wine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tastings_wine_id_fkey"
+            columns: ["wine_id"]
+            isOneToOne: false
+            referencedRelation: "wines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_wines: {
+        Row: {
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          mode: string
+          notes: string | null
+          purchase_date: string | null
+          quantity: number | null
+          storage_location: string | null
+          updated_at: string
+          user_id: string
+          wine_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          mode: string
+          notes?: string | null
+          purchase_date?: string | null
+          quantity?: number | null
+          storage_location?: string | null
+          updated_at?: string
+          user_id: string
+          wine_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          mode?: string
+          notes?: string | null
+          purchase_date?: string | null
+          quantity?: number | null
+          storage_location?: string | null
+          updated_at?: string
+          user_id?: string
+          wine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_wines_wine_id_fkey"
+            columns: ["wine_id"]
+            isOneToOne: false
+            referencedRelation: "wines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wines: {
+        Row: {
+          country: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          price: string | null
+          region: string | null
+          type: string
+          updated_at: string
+          vintage: string | null
+          winery: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          price?: string | null
+          region?: string | null
+          type: string
+          updated_at?: string
+          vintage?: string | null
+          winery?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: string | null
+          region?: string | null
+          type?: string
+          updated_at?: string
+          vintage?: string | null
+          winery?: string | null
         }
         Relationships: []
       }

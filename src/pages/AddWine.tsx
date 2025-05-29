@@ -1,319 +1,227 @@
+
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectGroup, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Wine, Upload, BookOpen, Utensils } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Wine, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserWines } from "@/hooks/useWines";
 import { toast } from "@/components/ui/sonner";
-import { useCommunity } from "@/contexts/CommunityContext";
-import CountryRegionSelector from "../components/CountryRegionSelector";
-import WineRating from "../components/WineRating";
-
-type WineFormData = {
-  name: string;
-  type: string;
-  vintage: string;
-  country: string;
-  region: string;
-  winery: string;
-  price: string;
-  tastingDate: string;
-  isFavorite: boolean;
-};
-
-type WineMode = "tasted" | "library" | null;
 
 const AddWine = () => {
   const navigate = useNavigate();
-  const { addActivity } = useCommunity();
-  const { register, handleSubmit, setValue, watch } = useForm<WineFormData>();
-  const [mode, setMode] = useState<WineMode>(null);
-  const [rating, setRating] = useState(0);
-  const [country, setCountry] = useState("");
-  const [region, setRegion] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
-  // Set today's date as default
-  React.useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    setValue("tastingDate", today);
-  }, [setValue]);
+  const { t } = useLanguage();
+  const { addWineToUser } = useUserWines();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "",
+    vintage: "",
+    country: "",
+    region: "",
+    winery: "",
+    price: "",
+    image_url: "",
+    notes: "",
+    storage_location: "",
+    quantity: 1
+  });
 
-  const onImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImagePreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  const wineTypes = [
+    { value: "red", label: "Rouge" },
+    { value: "white", label: "Blanc" },
+    { value: "rose", label: "Rosé" },
+    { value: "sparkling", label: "Pétillant" },
+    { value: "dessert", label: "Dessert" }
+  ];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.type) {
+      toast.error("Veuillez remplir au moins le nom et le type du vin");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await addWineToUser({
+        name: formData.name,
+        type: formData.type,
+        vintage: formData.vintage || null,
+        country: formData.country || null,
+        region: formData.region || null,
+        winery: formData.winery || null,
+        price: formData.price || null,
+        image_url: formData.image_url || null
+      });
+
+      toast.success(`${formData.name} a été ajouté à votre cave !`);
+      navigate("/my-cave");
+    } catch (error) {
+      toast.error("Erreur lors de l'ajout du vin");
+      console.error("Erreur:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const onSubmit = (data: WineFormData) => {
-    const wineData = {
-      ...data,
-      country,
-      region,
-      mode,
-      rating: mode === "tasted" ? rating : undefined,
-      image: imagePreview
-    };
-    
-    console.log(wineData);
-    
-    // Add activity to community
-    addActivity({
-      username: "Utilisateur",
-      action: "added",
-      wineName: data.name,
-      reason: mode === "tasted" ? "Dégustation" : "Bibliothèque"
-    });
-    
-    toast.success(mode === "tasted" ? "Vin dégusté ajouté avec succès!" : "Vin ajouté à votre bibliothèque!");
-    navigate("/my-cave");
+  const handleInputChange = (field: string, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
-
-  const resetForm = () => {
-    setMode(null);
-    setRating(0);
-    setCountry("");
-    setRegion("");
-    setImagePreview(null);
-  };
-
-  if (mode === null) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-rose-50 to-slate-100 py-8 px-4">
-        <div className="max-w-2xl mx-auto">
-          <Button 
-            variant="ghost" 
-            className="mb-6" 
-            onClick={() => navigate("/")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Retour
-          </Button>
-          
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-red-600 to-red-700 text-white text-center">
-              <CardTitle className="text-2xl flex items-center justify-center gap-2">
-                <Wine size={24} /> Ajouter un Vin
-              </CardTitle>
-              <CardDescription className="text-red-100">
-                Choisissez le type d'ajout
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="pt-8 pb-8">
-              <div className="space-y-4">
-                <Button
-                  onClick={() => setMode("tasted")}
-                  className="w-full py-8 text-lg flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 transition-all duration-200 hover:scale-105"
-                  size="lg"
-                >
-                  <Utensils size={24} />
-                  <div className="text-left">
-                    <div className="font-semibold">Déjà dégusté</div>
-                    <div className="text-sm opacity-90">Ajouter une expérience de dégustation</div>
-                  </div>
-                </Button>
-
-                <Button
-                  onClick={() => setMode("library")}
-                  className="w-full py-8 text-lg flex items-center justify-center gap-3 bg-red-700 hover:bg-red-800 transition-all duration-200 hover:scale-105"
-                  size="lg"
-                >
-                  <BookOpen size={24} />
-                  <div className="text-left">
-                    <div className="font-semibold">À ajouter dans ma bibliothèque</div>
-                    <div className="text-sm opacity-90">Ajouter un vin à déguster plus tard</div>
-                  </div>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-slate-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-slate-100 p-4">
       <div className="max-w-2xl mx-auto">
-        <Button 
-          variant="ghost" 
-          className="mb-6" 
-          onClick={resetForm}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Retour
-        </Button>
-        
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-red-600 to-red-700 text-white">
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Wine size={24} /> 
-              {mode === "tasted" ? "Vin Dégusté" : "Ajouter à ma Bibliothèque"}
-            </CardTitle>
-            <CardDescription className="text-red-100">
-              {mode === "tasted" 
-                ? "Enregistrez votre expérience de dégustation" 
-                : "Ajoutez un vin à votre collection"
-              }
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="pt-6">
-            <form id="wine-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Photo du vin */}
-              <div className="space-y-3">
-                <Label htmlFor="wine-image" className="text-base font-semibold">Photo du Vin</Label>
-                <div className="flex flex-col items-center justify-center border-2 border-dashed border-red-200 rounded-lg p-6 bg-red-50 hover:bg-red-100 transition-colors">
-                  {imagePreview ? (
-                    <div className="relative">
-                      <img 
-                        src={imagePreview} 
-                        alt="Aperçu du vin" 
-                        className="h-48 object-contain mb-2 rounded-lg"
-                      />
-                      <Button 
-                        type="button" 
-                        variant="destructive" 
-                        size="sm"
-                        className="absolute -top-2 -right-2" 
-                        onClick={() => setImagePreview(null)}
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="mx-auto h-12 w-12 text-red-400" />
-                      <div className="mt-2 text-sm text-red-600">
-                        <label htmlFor="file-upload" className="cursor-pointer font-medium hover:text-red-500">
-                          Télécharger une photo
-                        </label> ou glisser-déposer
-                      </div>
-                    </div>
-                  )}
-                  <Input 
-                    id="file-upload" 
-                    type="file" 
-                    onChange={onImageChange} 
-                    className="hidden" 
-                    accept="image/*"
-                  />
-                </div>
-              </div>
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={20} />
+            Retour
+          </Button>
+          <h1 className="text-3xl font-bold text-red-900 flex items-center gap-3">
+            <Wine size={32} />
+            {t('addWine.title')}
+          </h1>
+        </div>
 
-              {/* Informations de base */}
-              <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Plus size={20} />
+              Ajouter un nouveau vin
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-base font-semibold">Nom du Vin *</Label>
-                  <Input 
-                    id="name" 
-                    {...register("name", { required: true })} 
-                    placeholder="ex. Château Margaux"
-                    className="text-lg"
+                  <Label htmlFor="name">Nom du vin *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    placeholder="Ex: Château Margaux"
+                    required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="type" className="text-base font-semibold">Type de Vin *</Label>
-                  <Select onValueChange={(value) => setValue("type", value)}>
-                    <SelectTrigger id="type" className="text-lg">
+                  <Label htmlFor="type">Type *</Label>
+                  <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value)}>
+                    <SelectTrigger>
                       <SelectValue placeholder="Sélectionner le type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="red">🍷 Rouge</SelectItem>
-                        <SelectItem value="white">🥂 Blanc</SelectItem>
-                        <SelectItem value="rose">🌹 Rosé</SelectItem>
-                        <SelectItem value="sparkling">🍾 Pétillant</SelectItem>
-                        <SelectItem value="dessert">🍯 Dessert</SelectItem>
-                      </SelectGroup>
+                      {wineTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <CountryRegionSelector
-                  country={country}
-                  region={region}
-                  onCountryChange={setCountry}
-                  onRegionChange={setRegion}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="vintage" className="text-base font-semibold">Millésime</Label>
-                    <Input id="vintage" {...register("vintage")} placeholder="ex. 2018" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="price" className="text-base font-semibold">Prix</Label>
-                    <Input id="price" {...register("price")} placeholder="ex. 45€" />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vintage">Millésime</Label>
+                  <Input
+                    id="vintage"
+                    value={formData.vintage}
+                    onChange={(e) => handleInputChange("vintage", e.target.value)}
+                    placeholder="Ex: 2020"
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="winery" className="text-base font-semibold">Domaine/Producteur</Label>
-                  <Input id="winery" {...register("winery")} placeholder="ex. Château Margaux" />
+                  <Label htmlFor="winery">Domaine</Label>
+                  <Input
+                    id="winery"
+                    value={formData.winery}
+                    onChange={(e) => handleInputChange("winery", e.target.value)}
+                    placeholder="Ex: Château Margaux"
+                  />
                 </div>
 
-                {mode === "tasted" && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="tastingDate" className="text-base font-semibold">Date de dégustation</Label>
-                      <Input id="tastingDate" type="date" {...register("tastingDate")} />
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Note</Label>
-                      <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
-                        <WineRating rating={rating} onRatingChange={setRating} size={36} />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <div className="flex items-center space-x-2 p-4 bg-gray-50 rounded-lg">
-                  <Checkbox 
-                    id="isFavorite"
-                    onCheckedChange={(checked) => {
-                      setValue("isFavorite", checked as boolean);
-                    }}
+                <div className="space-y-2">
+                  <Label htmlFor="country">Pays</Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange("country", e.target.value)}
+                    placeholder="Ex: France"
                   />
-                  <Label htmlFor="isFavorite" className="text-base font-medium">
-                    ⭐ Ajouter aux favoris
-                  </Label>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="region">Région</Label>
+                  <Input
+                    id="region"
+                    value={formData.region}
+                    onChange={(e) => handleInputChange("region", e.target.value)}
+                    placeholder="Ex: Bordeaux"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="price">Prix</Label>
+                  <Input
+                    id="price"
+                    value={formData.price}
+                    onChange={(e) => handleInputChange("price", e.target.value)}
+                    placeholder="Ex: 50€"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="storage_location">Emplacement</Label>
+                  <Input
+                    id="storage_location"
+                    value={formData.storage_location}
+                    onChange={(e) => handleInputChange("storage_location", e.target.value)}
+                    placeholder="Ex: Cave A, Étagère 3"
+                  />
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="image_url">URL de l'image</Label>
+                <Input
+                  id="image_url"
+                  value={formData.image_url}
+                  onChange={(e) => handleInputChange("image_url", e.target.value)}
+                  placeholder="https://exemple.com/image.jpg"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes personnelles</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => handleInputChange("notes", e.target.value)}
+                  placeholder="Vos impressions, notes de dégustation..."
+                  rows={3}
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full bg-red-600 hover:bg-red-700"
+                disabled={loading}
+              >
+                {loading ? "Ajout en cours..." : "Ajouter à ma cave"}
+              </Button>
             </form>
           </CardContent>
-          
-          <CardFooter className="flex justify-end space-x-4 border-t p-6 bg-gray-50">
-            <Button variant="outline" onClick={resetForm}>Annuler</Button>
-            <Button type="submit" form="wine-form" className="bg-red-600 hover:bg-red-700">
-              {mode === "tasted" ? "Enregistrer la dégustation" : "Ajouter à ma bibliothèque"}
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     </div>
